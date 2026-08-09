@@ -48,6 +48,7 @@ public class MemberServiceTest {
                     .deposit(1000 * i)
                     .isAdmin(false)
                     .role(Role.BUYER)
+                    .age(i)
                     .build();
 
             memberRepository.save(member);
@@ -91,5 +92,55 @@ public class MemberServiceTest {
         assertThat(page.getTotalElements()).isEqualTo(30);
         assertThat(page.getTotalPages()).isEqualTo(3);
         assertThat(page.getContent().get(0).getName()).isEqualTo("user30");
+    }
+
+    @Test
+    @DisplayName("나이가 20 이상인 회원을 이름 기준 오름차순으로 조회한다.")
+    void testGetAdultMembersSortedByName() {
+        Page<Member> page =
+                memberService.getAdultMembersSortedByName(0, 20);
+
+        // 20세부터 30세까지 총 11명
+        assertThat(page.getTotalElements()).isEqualTo(11);
+        assertThat(page.getContent()).hasSize(11);
+
+        // 조회된 모든 회원이 20세 이상인지 확인
+        assertThat(page.getContent())
+                .allMatch(member -> member.getAge() >= 20);
+
+        // 이름이 오름차순으로 정렬됐는지 확인
+        assertThat(page.getContent())
+                .extracting(Member::getName)
+                .isSorted();
+    }
+
+    @Test
+    @DisplayName("이름이 주어진 값으로 시작하는 회원만 조회한다.")
+    void testGetMembersByNamePrefix() {
+        List<Member> members =
+                memberService.getMembersByNamePrefix("user1");
+
+        assertThat(members).hasSize(11);
+
+        assertThat(members)
+                .allMatch(member ->
+                        member.getName().startsWith("user1")
+                );
+
+        assertThat(members)
+                .extracting(Member::getName)
+                .containsExactlyInAnyOrder(
+                        "user1",
+                        "user10",
+                        "user11",
+                        "user12",
+                        "user13",
+                        "user14",
+                        "user15",
+                        "user16",
+                        "user17",
+                        "user18",
+                        "user19"
+                );
     }
 }

@@ -28,8 +28,17 @@ public class MemberService {
     }
 
     public Page<Member> getMembersByPage(int page, int size){
-        return memberRepository.findAll(PageRequest.of(page, size, Sort.by("Id").descending()));
+        return memberRepository.findAll(PageRequest.of(page, size, Sort.by("id").descending()));
 
+    }
+
+    public Page<Member> getAdultMembersSortedByName(int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        return memberRepository.findByAgeGreaterThanEqual(20, pageable);
+    }
+
+    public List<Member> getMembersByNamePrefix(String prefix) {
+        return memberRepository.findByNameStartingWith(prefix);
     }
 }
 
