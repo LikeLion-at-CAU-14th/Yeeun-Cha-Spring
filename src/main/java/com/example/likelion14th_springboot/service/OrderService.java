@@ -78,7 +78,7 @@ public class OrderService {
     public List<OrderResponseDto> getOrdersByBuyer(
             Long buyerId
     ) {
-        return orderRepository.findAllByBuyerId(buyerId)
+        return orderRepository.findAllByBuyerIdAndDeletedFalse(buyerId)
                 .stream()
                 .map(OrderResponseDto::fromEntity)
                 .toList();
@@ -86,7 +86,8 @@ public class OrderService {
 
     @Transactional(readOnly = true) //단건 주문 조회
     public OrderResponseDto getOrderById(Long orderId) {
-        Orders order = orderRepository.findById(orderId)
+        Orders order = orderRepository
+                .findByIdAndDeletedFalse(orderId)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "주문을 찾을 수 없습니다."
@@ -101,7 +102,7 @@ public class OrderService {
             Long orderId,
             OrderUpdateRequestDto dto
     ) {
-        Orders order = orderRepository.findById(orderId)
+        Orders order = orderRepository.findByIdAndDeletedFalse(orderId)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "주문을 찾을 수 없습니다."
@@ -113,5 +114,18 @@ public class OrderService {
         );
 
         return OrderResponseDto.fromEntity(order);
+    }
+
+    @Transactional
+    public void deleteOrder(Long orderId) {
+        Orders order = orderRepository
+                .findByIdAndDeletedFalse(orderId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "주문을 찾을 수 없습니다."
+                        )
+                );
+
+        order.softDelete();
     }
 }

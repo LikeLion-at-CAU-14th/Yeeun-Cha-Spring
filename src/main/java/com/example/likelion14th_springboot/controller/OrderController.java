@@ -56,4 +56,15 @@ public class OrderController {
         );
     }
 
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<String> deleteOrder(
+            @PathVariable Long orderId
+    ) {
+        orderService.deleteOrder(orderId);
+
+        return ResponseEntity.ok(
+                "주문이 성공적으로 삭제되었습니다."
+        );
+    }
+
 }
