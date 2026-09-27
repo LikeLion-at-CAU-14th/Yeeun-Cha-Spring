@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -69,5 +71,27 @@ public class OrderService {
 
         // 7. 응답 DTO로 변환
         return OrderResponseDto.fromEntity(savedOrder);
+    }
+
+    @Transactional(readOnly = true) //구매자별 주문 목록 조회
+    public List<OrderResponseDto> getOrdersByBuyer(
+            Long buyerId
+    ) {
+        return orderRepository.findAllByBuyerId(buyerId)
+                .stream()
+                .map(OrderResponseDto::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true) //단건 주문 조회
+    public OrderResponseDto getOrderById(Long orderId) {
+        Orders order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "주문을 찾을 수 없습니다."
+                        )
+                );
+
+        return OrderResponseDto.fromEntity(order);
     }
 }

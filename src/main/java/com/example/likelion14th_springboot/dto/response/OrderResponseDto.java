@@ -5,6 +5,8 @@ import com.example.likelion14th_springboot.domain.ShippingAddress;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @Builder
 public class OrderResponseDto {
@@ -13,6 +15,7 @@ public class OrderResponseDto {
     private Long buyerId;
     private String deliverStatus;
     private ShippingAddress shippingAddress;
+    private List<OrderProductResponseDto> products;
 
     public static OrderResponseDto fromEntity(Orders order) {
         return OrderResponseDto.builder()
@@ -20,6 +23,9 @@ public class OrderResponseDto {
                 .buyerId(order.getBuyer().getId())
                 .deliverStatus(order.getDeliverStatus().name())
                 .shippingAddress(order.getShippingAddress())
+                .products(order.getProductOrders().stream()
+                        .map(OrderProductResponseDto::fromEntity)
+                        .toList())
                 .build();
     }
 }
