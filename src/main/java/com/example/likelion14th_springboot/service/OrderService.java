@@ -7,6 +7,7 @@ import com.example.likelion14th_springboot.domain.enums.DeliverStatus;
 import com.example.likelion14th_springboot.domain.mapping.ProductOrders;
 import com.example.likelion14th_springboot.dto.request.OrderCreateRequestDto;
 import com.example.likelion14th_springboot.dto.request.OrderProductRequestDto;
+import com.example.likelion14th_springboot.dto.request.OrderUpdateRequestDto;
 import com.example.likelion14th_springboot.dto.response.OrderResponseDto;
 import com.example.likelion14th_springboot.repository.MemberRepository;
 import com.example.likelion14th_springboot.repository.OrderRepository;
@@ -91,6 +92,25 @@ public class OrderService {
                                 "주문을 찾을 수 없습니다."
                         )
                 );
+
+        return OrderResponseDto.fromEntity(order);
+    }
+
+    @Transactional
+    public OrderResponseDto updateOrder(
+            Long orderId,
+            OrderUpdateRequestDto dto
+    ) {
+        Orders order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "주문을 찾을 수 없습니다."
+                        )
+                );
+
+        order.updateShippingAddress(
+                dto.toShippingAddress()
+        );
 
         return OrderResponseDto.fromEntity(order);
     }
