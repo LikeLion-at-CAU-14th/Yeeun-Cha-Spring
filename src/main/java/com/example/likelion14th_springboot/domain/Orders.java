@@ -1,14 +1,15 @@
 package com.example.likelion14th_springboot.domain;
 
 
-import com.example.likelion14th_springboot.domain.mapping.ProductOrders;
 import com.example.likelion14th_springboot.domain.enums.DeliverStatus;
+import com.example.likelion14th_springboot.domain.mapping.ProductOrders;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -25,13 +26,48 @@ public class Orders extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private DeliverStatus deliverStatus; // 배송상태
 
+    @Embedded
+    private ShippingAddress shippingAddress; //배송정보
+
     @ManyToOne
-    @JoinColumn(name ="buyer_id")
+    @JoinColumn(name = "buyer_id")
     private Member buyer;
 
+    @Builder.Default
     @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL)
-    private List<ProductOrders> productOrders;
+    private List<ProductOrders> productOrders = new ArrayList<>();
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean deleted = false;
 
     @OneToOne(mappedBy = "orders", cascade = CascadeType.ALL)
     private Coupon coupon;
+
+    public void addProductOrder(ProductOrders productOrder) {
+        this.productOrders.add(productOrder);
+    }
+
+    public void updateShippingAddress(
+            ShippingAddress shippingAddress
+    ) {
+        if (this.deliverStatus != DeliverStatus.PREPARATION) {
+            throw new IllegalArgumentException(
+                    "배송 준비 중인 주문만 배송정보를 수정할 수 있습니다."
+            );
+        }
+
+        this.shippingAddress = shippingAddress;
+    }
+
+    public void softDelete() {
+        if (this.deliverStatus != DeliverStatus.COMPLETED) {
+            throw new IllegalArgumentException(
+                    "배송 완료된 주문만 삭제할 수 있습니다."
+            );
+        }
+
+        this.deleted = true;
+    }
+
 }
