@@ -2,6 +2,7 @@ package com.example.likelion14th_springboot.service;
 
 import com.example.likelion14th_springboot.domain.Member;
 import com.example.likelion14th_springboot.dto.request.JoinRequestDto;
+import com.example.likelion14th_springboot.exception.DuplicateMemberNameException;
 import com.example.likelion14th_springboot.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -49,7 +50,7 @@ public class MemberService {
     public void join(JoinRequestDto joinRequestDto) {
         // 해당 name이 이미 존재하는 경우
         if (memberRepository.existsByName(joinRequestDto.getName())) {
-            return; // 나중에 예외 처리
+            throw new DuplicateMemberNameException(joinRequestDto.getName());
         }
 
         // 유저 객체 생성
