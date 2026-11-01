@@ -1,5 +1,6 @@
 package com.example.likelion14th_springboot.service;
 
+import com.example.likelion14th_springboot.config.PrincipalHandler;
 import com.example.likelion14th_springboot.domain.Member;
 import com.example.likelion14th_springboot.domain.Product;
 import com.example.likelion14th_springboot.dto.request.ProductCreateRequestDto;
@@ -93,6 +94,29 @@ public class ProductService {
 
         // 4. DB에서 상품 완전 삭제
         productRepository.delete(product);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductResponseDto> getMyProducts() {
+        // JWT에 저장된 현재 로그인 사용자의 이메일 가져오기
+        String email = PrincipalHandler.getUsernameFromPrincipal();
+
+        // 이메일로 현재 회원 조회
+        Member seller = memberRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("해당 회원이 존재하지 않습니다.")
+                );
+
+        // 판매자인지 확인
+        if (!seller.isSeller()) {
+            throw new IllegalArgumentException("판매자만 상품 목록을 조회할 수 있습니다.");
+        }
+
+        // 현재 판매자가 등록한 상품만 조회
+        return productRepository.findAllBySeller(seller)
+                .stream()
+                .map(ProductResponseDto::fromEntity)
+                .toList();
     }
 
 }
