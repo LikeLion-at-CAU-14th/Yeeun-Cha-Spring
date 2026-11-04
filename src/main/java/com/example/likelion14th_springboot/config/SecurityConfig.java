@@ -1,5 +1,8 @@
 package com.example.likelion14th_springboot.config;
 
+import com.example.likelion14th_springboot.global.config.OAuth2SuccessHandler;
+import com.example.likelion14th_springboot.jwt.JwtAuthenticationFilter;
+import com.example.likelion14th_springboot.service.CustomOAuth2UserService; // 추가
 import com.example.likelion14th_springboot.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -9,8 +12,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.Arrays;
@@ -23,6 +28,8 @@ import java.util.Collections;
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService; // UserDetailsService DI. 의존성 주입
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final JwtAuthenticationFilter jwtFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -30,16 +37,27 @@ public class SecurityConfig {
         http
                 .cors((SecurityConfig::corsAllow)) // CORS 설정
                 .csrf(AbstractHttpConfigurer::disable) // 비활성화
+                .sessionManagement((manager) -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) //세션 로그인 안함
+                .httpBasic(AbstractHttpConfigurer::disable) // http basic auth 기반 로그인 인증창 뜨지 않게
+                .formLogin(AbstractHttpConfigurer::disable) // 기본 로그인 페이지 없애기
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/join", "/login").permitAll() // 회원가입, 로그인은 모두 허용
+                        .requestMatchers("/join", "/login", "/oauth2/**", "/login/oauth2/**").permitAll() // 모두 허용
                         .requestMatchers("/**").authenticated()) // 나머지는 인증된 사용자만 허용
-                .formLogin(Customizer.withDefaults())
+                .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        .successHandler(oAuth2SuccessHandler)
+                )
+                //.formLogin(Customizer.withDefaults())
                 .logout(Customizer.withDefaults())
                 .userDetailsService(customUserDetailsService);
-        ;
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); // 해당 필터 전에 jwtFilter가 걸리도록
 
         return http.build();
     }
+
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {

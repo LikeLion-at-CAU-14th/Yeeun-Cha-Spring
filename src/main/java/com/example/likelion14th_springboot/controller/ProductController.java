@@ -30,6 +30,12 @@ public class ProductController {
         return ResponseEntity.ok(productService.getAllProducts());
     }
 
+    // 로그인한 판매자의 상품 목록 조회
+    @GetMapping("/my")
+    public ResponseEntity<List<ProductResponseDto>> getMyProducts() {
+        return ResponseEntity.ok(productService.getMyProducts());
+    }
+    
     // 특정 상품 상세 조회: GET http://localhost:8080/products/{id}
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long id) {
