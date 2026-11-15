@@ -119,6 +119,52 @@ class ProductServiceTest {
     }
 
     @Test
+    @DisplayName("실패: 본인의 상품이 아니면 예외가 발생한다.")
+    void updateProduct_Fail_NotOwner() {
+        // Given
+        Long ownerId = 1L;
+        Long hackerId = 2L;
+        Long productId = 100L;
+
+        Member owner = Member.builder()
+                .name("주인")
+                .build();
+        ReflectionTestUtils.setField(owner, "id", ownerId);
+
+        Member hacker = Member.builder()
+                .name("해커")
+                .build();
+        ReflectionTestUtils.setField(hacker, "id", hackerId);
+
+        Product mockProduct = Product.builder()
+                .seller(owner)
+                .build();
+
+        ProductUpdateRequestDto requestDto =
+                new ProductUpdateRequestDto();
+        ReflectionTestUtils.setField(
+                requestDto,
+                "memberId",
+                hackerId
+        );
+
+        given(memberRepository.findById(hackerId))
+                .willReturn(Optional.of(hacker));
+        given(productRepository.findById(productId))
+                .willReturn(Optional.of(mockProduct));
+
+        // When & Then
+        assertThatThrownBy(
+                () -> productService.updateProduct(
+                        productId,
+                        requestDto
+                )
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("본인의 상품만 수정할 수 있습니다.");
+    }
+
+    @Test
     @DisplayName("본인의 상품을 성공적으로 수정할 수 있다.")
     void updateProduct_Success() {
         // given
